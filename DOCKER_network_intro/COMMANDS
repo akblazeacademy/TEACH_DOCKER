@@ -1,0 +1,17 @@
+docker build -f DockerfileC01 -t image01:v1 .
+docker build -f DockerfileC02 -t image02:v1 .
+docker run -itd --name C02 -p 30080:80 image02:v1
+docker run -itd --name C01 -p 5000:80 image01:v1
+wget -qO- http://localhost:30080
+wget -qO- http://localhost:5000
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' C01
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' C02
+curl http://172.17.0.4:80
+curl http://172.17.0.5:80
+docker inspect C01 --format '{{.NetworkSettings.Networks}}'
+docker inspect C02 --format '{{.NetworkSettings.Networks}}'
+docker exec -it C01 sh
+wget -qO- http://C02:80
+
+
+

@@ -1,0 +1,4 @@
+mkdir app
+echo "Hello from ADD" > app/index.html
+tar -czvf app.tar.gz app
+
