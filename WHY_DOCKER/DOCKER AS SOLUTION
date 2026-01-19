@@ -1,0 +1,175 @@
+========================================
+JAVA VERSION ISOLATION PRACTICAL (DOCKER)
+========================================
+Goal:
+Prove that Docker allows MULTIPLE Java
+versions to run at the SAME TIME on the
+SAME VM without conflict.
+
+----------------------------------------
+STEP 0: Verify Docker is installed
+----------------------------------------
+Command:
+docker --version
+
+Explanation:
+Confirms Docker is available on the VM.
+Docker will isolate runtimes per application.
+
+----------------------------------------
+STEP 1: Create workspace
+----------------------------------------
+Commands:
+cd /home/azure
+mkdir java-docker-proof && cd java-docker-proof
+
+Explanation:
+Separate directory for Docker demo.
+
+----------------------------------------
+STEP 2: Create ONE Java application
+----------------------------------------
+Command:
+vim App.java
+
+Code inside App.java:
+public class App {
+    public static void main(String[] args) {
+        System.out.println(
+            "Running with Java version: "
+            + System.getProperty("java.version")
+        );
+        try {
+            Thread.sleep(300000);
+        } catch (Exception e) {}
+    }
+}
+
+Explanation:
+- Same app used for both Java versions
+- Prints ACTUAL runtime Java version
+- Sleep keeps container running so both
+  containers can run simultaneously
+
+----------------------------------------
+STEP 3: Create Dockerfile for Java 8
+----------------------------------------
+Command:
+vim Dockerfile.java8
+
+Content:
+FROM eclipse-temurin:8-jdk
+WORKDIR /app
+COPY App.java .
+RUN javac App.java
+CMD ["java", "App"]
+
+Explanation:
+This container is PERMANENTLY locked
+to Java 8.
+Host VM Java version does not matter.
+
+----------------------------------------
+STEP 4: Create Dockerfile for Java 17
+----------------------------------------
+Command:
+vim Dockerfile.java17
+
+Content:
+FROM eclipse-temurin:17-jdk
+WORKDIR /app
+COPY App.java .
+RUN javac App.java
+CMD ["java", "App"]
+
+Explanation:
+This container is PERMANENTLY locked
+to Java 17.
+
+----------------------------------------
+STEP 5: Build both Docker images
+----------------------------------------
+Commands:
+docker build -t app-java8  -f Dockerfile.java8 .
+docker build -t app-java17 -f Dockerfile.java17 .
+
+Explanation:
+Two images built with two DIFFERENT
+Java versions on the SAME VM.
+
+----------------------------------------
+STEP 6: Run BOTH containers at SAME TIME
+----------------------------------------
+Commands:
+docker run -d --name java8-container  app-java8
+docker run -d --name java17-container app-java17
+
+Explanation:
+Both containers are running SIMULTANEOUSLY.
+This is IMPOSSIBLE on a plain VM without Docker.
+
+----------------------------------------
+STEP 7: Verify both containers are running
+----------------------------------------
+Command:
+docker ps
+
+Explanation:
+Shows Java 8 and Java 17 containers
+running at the same time on the same VM.
+
+----------------------------------------
+STEP 8: Check Java version INSIDE each container
+----------------------------------------
+Commands:
+docker logs java8-container
+docker logs java17-container
+
+Expected Output:
+
+Java 8 container:
+Running with Java version: 1.8.x
+
+Java 17 container:
+Running with Java version: 17.x.x
+
+Explanation:
+Each container runs with its OWN Java
+runtime, fully isolated, no conflict.
+
+----------------------------------------
+OPTIONAL VERIFICATION (STRONG PROOF)
+----------------------------------------
+Commands:
+docker exec -it java8-container java -version
+docker exec -it java17-container java -version
+
+Explanation:
+Directly proves different JVMs are
+running simultaneously.
+
+----------------------------------------
+FINAL PROOF STATEMENT
+----------------------------------------
+On the SAME VM:
+- Java 8 container is running
+- Java 17 container is running
+- No switching required
+- No conflicts
+- No operational risk
+
+----------------------------------------
+FINAL CONCLUSION
+----------------------------------------
+VM (without Docker):
+- One Java version at a time
+- Global runtime
+- High risk of breaking apps
+
+Docker:
+- Per-application runtime
+- Multiple Java versions
+- Safe, isolated, predictable
+
+THIS IS WHY DOCKER IS USED IN PRODUCTION
+========================================
