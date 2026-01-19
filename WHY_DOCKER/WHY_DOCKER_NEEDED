@@ -1,0 +1,167 @@
+========================================
+JAVA VERSION CONFLICT PRACTICAL (VM)
+========================================
+Goal:
+Prove that on a VM only ONE Java version
+can be active at a time, and changing it
+breaks or forces other applications.
+
+----------------------------------------
+STEP 0: Check existing Java
+----------------------------------------
+Command:
+java -version
+
+Explanation:
+Shows the currently active system-wide
+Java version on the VM.
+
+----------------------------------------
+STEP 1: Install Java 8 and Java 17
+----------------------------------------
+Commands:
+sudo apt update
+sudo apt install openjdk-8-jdk -y
+sudo apt install openjdk-17-jdk -y
+
+Explanation:
+We install BOTH Java versions on the VM.
+Installing does NOT mean both can run
+at the same time.
+
+----------------------------------------
+STEP 2: Create a test application
+----------------------------------------
+Commands:
+cd /home/azure
+mkdir java-proof && cd java-proof
+vim App.java
+
+Code inside App.java:
+public class App {
+    public static void main(String[] args) {
+        System.out.println(
+            "Running with Java version: "
+            + System.getProperty("java.version")
+        );
+    }
+}
+
+Explanation:
+This app prints the ACTUAL runtime Java
+version, not a hardcoded message.
+
+----------------------------------------
+CASE 1: Compile with Java 17, run on Java 8
+----------------------------------------
+
+Step 3: Select Java 17 for BOTH compiler and runtime
+Commands:
+sudo update-alternatives --config java
+sudo update-alternatives --config javac
+
+Explanation:
+Now the VM is globally set to Java 17.
+
+----------------------------------------
+Step 4: Verify Java 17 is active
+----------------------------------------
+Commands:
+java -version | tee -a proof.txt
+javac -version | tee -a proof.txt
+
+Explanation:
+Confirms BOTH java and javac are Java 17.
+
+----------------------------------------
+Step 5: Compile the app with Java 17
+----------------------------------------
+Commands:
+javac App.java
+javap -verbose App | grep major | tee -a proof.txt
+
+Explanation:
+major version 61 = Java 17 bytecode.
+
+----------------------------------------
+Step 6: Switch ONLY runtime to Java 8
+----------------------------------------
+Commands:
+sudo update-alternatives --config java
+java -version | tee -a proof.txt
+
+Explanation:
+Now runtime is Java 8, but class file
+was compiled with Java 17.
+
+----------------------------------------
+Step 7: Run the app (EXPECTED FAILURE)
+----------------------------------------
+Command:
+java App 2>&1 | tee -a proof.txt
+
+Explanation:
+This FAILS with UnsupportedClassVersionError.
+Proof that Java 17 bytecode cannot run on
+Java 8 runtime.
+
+----------------------------------------
+CASE 2: Compile with Java 8, then upgrade VM to Java 17
+----------------------------------------
+
+Step 8: Select Java 8 for BOTH compiler and runtime
+----------------------------------------
+Commands:
+sudo update-alternatives --config java
+sudo update-alternatives --config javac
+java -version | tee -a proof.txt
+javac -version | tee -a proof.txt
+
+Explanation:
+VM is now fully on Java 8.
+
+----------------------------------------
+Step 9: Recompile app with Java 8
+----------------------------------------
+Commands:
+rm App.class
+javac App.java
+javap -verbose App | grep major | tee -a proof.txt
+
+Explanation:
+major version 52 = Java 8 bytecode.
+
+----------------------------------------
+Step 10: Upgrade ONLY runtime to Java 17
+----------------------------------------
+Commands:
+sudo update-alternatives --config java
+java App | tee -a proof.txt
+
+Explanation:
+App now runs on Java 17 runtime,
+even though it was built for Java 8.
+The app is FORCED to use the new Java.
+
+----------------------------------------
+FINAL PROOF
+----------------------------------------
+Command:
+cat proof.txt
+
+Explanation:
+proof.txt shows:
+1) Java 17 apps fail on Java 8
+2) Java 8 apps are forced onto Java 17
+3) Only ONE Java runtime exists per VM
+
+----------------------------------------
+FINAL CONCLUSION
+----------------------------------------
+On a VM:
+- Java is system-wide
+- Only one version can run at a time
+- Upgrading Java breaks or alters other apps
+
+This is why Docker is required.
+========================================
