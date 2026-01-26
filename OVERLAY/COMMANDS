@@ -1,1 +1,36 @@
 docker network create --driver overlay --subnet 20.0.0.0/24  my-overlay-net
+docker network inspect my-overlay-net | grep Attachable
+docker network inspect my-overlay-net | grep Ingress
+docker node ls
+docker node update --label-add role=manager <MANAGER_NODE_ID>
+docker node update --label-add role=worker <WORKER_NODE_ID>
+docker node inspect sgmd56tid2m96cepspv9vslf3  --format '{{ .Spec.Labels }}' 
+docker service create \
+  --name svc1 \
+  --constraint 'node.labels.role==manager' \
+  --network my-overlay-net \
+  --publish published=8081,target=80 \
+  nginx:alpine \
+  sh -c "echo 'You hit container 1' > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'"
+
+docker service create \
+  --name svc2 \
+  --constraint 'node.labels.role==worker' \
+  --network my-overlay-net \
+  --publish published=8082,target=80 \
+  nginx:alpine \
+  sh -c "echo 'You hit container 2' > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'"
+ 
+docker service ls
+docker service ps svc1
+docker service ps svc2
+
+docker exec -it $(docker ps -q --filter name=svc1) sh
+wget -qO- http://svc2 
+docker exec -it $(docker ps -q --filter name=svc2) sh
+wget -qO- http://svc1
+
+curl http://<privateip of vm 1>:8081
+curl http://<privateip of vm1 >:8082
+http://<VM_PUBLIC_IP>:8081
+http://<VM_PUBLIC_IP>:8082
