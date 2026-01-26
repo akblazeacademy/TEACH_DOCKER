@@ -1,0 +1,35 @@
+docker service create \
+  --name web-service \
+  --replicas 3 \
+  -p 8080:80 \
+  nginx:alpine \
+  sh -c 'echo "You hit container: $(hostname)" > /usr/share/nginx/html/index.html && nginx -g "daemon off;"'
+docker service ls
+docker service ps web-service
+curl http://<MANAGER-IP>:8080
+docker service scale web-service=5 
+docker rm -f <container-id>
+docker service ps web-service
+docker service inspect web --pretty
+docker node ls
+docker node update --availability drain <node-name>
+docker node rm <node-name>
+docker node demote <node-name>
+docker node rm <node-name>
+docker swarm leave > run on the node 
+docker swarm leave --force
+docker swarm join-token worker
+docker service rm node-monitor
+docker service ls -q | xargs docker service rm
+docker service create \
+  --name node-monitor \
+  --mode global \
+  --constraint 'node.platform.os == linux' \
+  --restart-condition any \
+  alpine \
+  sh -c 'while true; do echo "Node: $(hostname) | Time: $(date)"; sleep 10; done'
+
+
+Worker is healthy	drain → swarm leave → node rm
+Worker VM deleted	docker node rm --force
+Maintenance	docker node update --availability drain
